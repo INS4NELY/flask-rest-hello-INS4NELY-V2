@@ -60,7 +60,9 @@ def get_people():
 @app.route('/people/<int:people_id>', methods=['GET'])
 def get_person(people_id):
     character = Character.query.get(people_id)
-    return jsonify(character.serialize()), 200
+    if character:
+        return jsonify(character.serialize()), 200
+    return jsonify({'msj': 'No se encontro al personaje'}), 404
 
 @app.route('/planets', methods=['GET'])
 def get_planets():
@@ -71,7 +73,9 @@ def get_planets():
 @app.route('/planets/<int:planet_id>', methods=['GET'])
 def get_planet(planet_id):
     planet = Planet.query.get(planet_id)
-    return jsonify(planet.serialize()), 200
+    if planet:
+        return jsonify(planet.serialize()), 200
+    return jsonify({'msj': 'No se encontro el planeta'}), 404
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -88,6 +92,13 @@ def get_favorites():
 @app.route('/favorite/people/<int:people_id>', methods=['POST'])
 def favorite_person(people_id):
     user_id = request.json.get('user_id')
+
+    if not user_id:
+        return jsonify({'msj': 'El id del usuario es requerido'}), 400
+    character = Character.query.get(people_id)
+    if not character:
+        return jsonify({'msj': 'El personaje no fue encontrado y nomastrabajos'}), 404
+    
     fav = Favorite(user_id=user_id, character_id=people_id)
     db.session.add(fav)
     db.session.commit()
@@ -96,6 +107,13 @@ def favorite_person(people_id):
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
 def favorite_planet(planet_id):
     user_id = request.json.get('user_id')
+        
+    if not user_id:
+        return jsonify({'msj': 'El id del usuario es requerido'}), 400
+    planet = Planet.query.get(planet_id)
+    if not planet:
+        return jsonify({'msj': 'El planeta no fue encontrado y quiero vacaciones'}), 404
+    
     fav = Favorite(user_id=user_id, planet_id=planet_id)
     db.session.add(fav)
     db.session.commit()
@@ -104,7 +122,13 @@ def favorite_planet(planet_id):
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 def delete_planet(planet_id):
     user_id = request.json.get('planet_id')
+
+    if not user_id:
+        return jsonify({'msj': 'El id del usuario no concuerda'}), 400
     fav = Favorite.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+    if not fav:
+        return jsonify({'msj': 'El planeta no fue encontrado'}), 400
+    
     db.session.delete(fav)
     db.session.commit()
     return '', 204
@@ -112,7 +136,13 @@ def delete_planet(planet_id):
 @app.route('/favorite/people/<int:people_id>', methods=['DELETE'])
 def delete_people(people_id):
     user_id = request.json.get('people_id')
+
+    if not user_id:
+        return jsonify({'msj': 'El id del usuario no concuerda'}), 400
     fav = Favorite.query.filter_by(user_id=user_id, character_id=people_id).first()
+    if not fav:
+        return jsonify({'msj': 'El personaje no fue encontrado'}), 400
+    
     db.session.delete(fav)
     db.session.commit()
     return '', 204
